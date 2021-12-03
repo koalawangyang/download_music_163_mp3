@@ -26,7 +26,6 @@ def parseArgs():
 	parser.add_argument('--password', dest='password', help='密码', type=str, required=True)
 	return parser.parse_args()
 
-
 '''下载器类'''
 class NeteaseSongListDownloader():
 	def __init__(self, username, password, **kwargs):
@@ -61,6 +60,9 @@ class NeteaseSongListDownloader():
 				user_choice = input('是否下载该歌单的所有歌曲(y/n, yes by default):')
 				if (not user_choice) or (user_choice == 'y') or (user_choice == 'yes'):
 					savepath = all_playlists[playlist_id][0]
+					savepath_has_special_character=savepath.find('/')
+					if savepath_has_special_character >= 0:
+						savepath=savepath.replace("/","-")
 					if not os.path.exists(savepath):
 						os.mkdir(savepath)
 					for key, value in song_infos.items():
@@ -90,13 +92,15 @@ class NeteaseSongListDownloader():
 						break
 		if download_url is None:
 			print('歌曲已失效，无法下载！')
+		elif os.path.exists(os.path.join(savepath, songname+'.mp3')):
+			print('歌曲已存在，继续下一个！')
 		else:
 			with closing(self.session.get(download_url, headers=self.headers, stream=True, verify=False)) as res:
 				total_size = int(res.headers['content-length'])
 				if res.status_code == 200:
 					label = '[FileSize]:%0.2f MB' % (total_size/(1024*1024))
 					with click.progressbar(length=total_size, label=label) as progressbar:
-						filepath_test = os.path.join(savepath, songname+'.mp3')
+						# filepath_test = os.path.join(savepath, songname+'.mp3')
 						# print('filepath='+filepath_test)
 						# with open(os.path.join(savepath, songname+'.'+download_url.split('.')[-1]), "wb") as f:
 						with open(os.path.join(savepath, songname+'.mp3'), "wb") as f:                        
